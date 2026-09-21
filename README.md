@@ -93,3 +93,17 @@ To re-fetch and re-generate this documentation suite:
 ```bash
 python3 scripts/scraper.py
 ```
+
+---
+
+## Attribution & License
+
+This repository is an **unofficial, derivative reformatting** of the [Sonic Physics Guide](https://info.sonicretro.org/Sonic_Physics_Guide) (SPG), written and maintained by the [Sonic Retro](https://sonicretro.org) community. It is not the original work of this repository's maintainer, and it is not affiliated with or endorsed by Sonic Retro or Sega.
+
+- **Authors:** the many Sonic Retro contributors who wrote and edited the guide. Per-page author lists are in each page's wiki history, starting with the [Sonic Physics Guide history](https://info.sonicretro.org/index.php?title=Sonic_Physics_Guide&action=history) and the [`SPG:` subpages](https://info.sonicretro.org/Special:PrefixIndex/SPG:).
+- **Text license:** Sonic Retro licenses its text under the [GNU Free Documentation License (GFDL)](https://www.gnu.org/licenses/fdl.html) (see [Sonic Retro's copyright notice](https://info.sonicretro.org/Sonic_Retro:Copyrights)). The Markdown in `docs/` is derived from that text and is therefore distributed under the same terms. It may be copied, modified, and redistributed as long as the same freedoms are preserved and the original authors are acknowledged. Each page in `docs/` derived from the guide links back to its source article.
+- **Changes made here:** converted wiki markup to Markdown, localized images and cross-links, and reorganized files for offline use. No claim of original authorship is made over the guide's content.
+- **Images:** diagrams and GIFs are copied from Sonic Retro and may carry their own terms; game sprites and screenshots remain the property of Sega. See each file's page on Sonic Retro for details. If you are a rights holder and want something removed, please open an issue.
+- **Original material:** `docs/23-implementation-guide.md`, `scripts/`, and `catalog/` are original to this repo and are not part of the guide's content.
+
+For the authoritative, up-to-date version of the guide, please use [Sonic Retro](https://info.sonicretro.org/Sonic_Physics_Guide) directly. See [NOTICE.md](NOTICE.md) for a short summary.
