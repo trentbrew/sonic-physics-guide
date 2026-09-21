@@ -60,7 +60,17 @@ The Sonic Physics Guide is the canonical reference detailing the exact mathemati
 - **[21. Animations](docs/21-animations.md)** - Sprite animation scripts, frame duration formulas based on player speed.
 - **[22. Overlay Scripts](docs/22-overlay-scripts.md)** - Gens/Lua diagnostic overlays for real-time sensor and speed monitoring.
 
+### 6. Implementation & AI Agent Blueprint
+- **[23. Implementation Guide & Agent Prompt](docs/23-implementation-guide.md)** - Practical guide for building a Genesis-accurate engine: the 3 critical gotchas (fixed-timestep accumulator, high-speed wall tunneling, concave mode hysteresis), the complete AI agent implementation prompt, and original character spritesheet.
+
 ---
+
+## Character Spritesheet Assets
+
+The original Genesis character spritesheets are stored locally in [`images/`](images/):
+- **[Sonic 1 Spritesheet (Transparent)](images/Sonic1_Spritesheet_Transparent.png)** - Ready-to-use RGBA transparent PNG containing all idle, walk, run, peel-out, roll, push, balance, and hurt frames.
+- **[Sonic 1 Spritesheet (Original Chroma-Key)](images/Sonic1_Spritesheet.png)** - Raw rip with Genesis green backdrop.
+
 
 ## Quick Reference: Physics Constants (Sonic 1 / 2 / 3&K)
 
