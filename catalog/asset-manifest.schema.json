@@ -1,0 +1,270 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:sonic-physics:asset-manifest:1.0.0",
+  "title": "Semantic asset manifest",
+  "description": "Stack-neutral description of every file under images/. Records what each asset visibly contains, what the documentation says it demonstrates, whether it is suitable for runtime use, what is known about its origin and rights, and how much of its numeric or spatial metadata has been verified. It uses plain JSON types and portable domain terms only.",
+  "x-schema-version": "1.0.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "catalog", "assets"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schema_version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$", "description": "Must equal x-schema-version of the schema this manifest targets." },
+    "catalog": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["asset_root", "catalog_date", "description", "method_notes", "open_questions"],
+      "properties": {
+        "asset_root": { "const": "images", "description": "Directory whose regular files are all catalogued." },
+        "catalog_date": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "description": { "$ref": "#/$defs/text" },
+        "method_notes": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/text" }, "description": "How the catalog was produced and what was and was not verified." },
+        "open_questions": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/text" }, "description": "Unresolved provenance, rights or metadata questions, most important first." }
+      }
+    },
+    "assets": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/asset" } }
+  },
+  "$defs": {
+    "text": { "type": "string", "minLength": 1 },
+    "id": { "type": "string", "pattern": "^[a-z0-9]+(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)+$", "description": "Stable semantic identifier: dot-separated namespace then hyphenated name. Does not change when the file is renamed." },
+    "textList": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/text" } },
+    "intOrNull": { "type": ["integer", "null"] },
+    "bounds": { "type": "array", "minItems": 4, "maxItems": 4, "items": { "type": "integer", "minimum": 0 }, "description": "[x, y, width, height] in pixels, origin at the image top-left, x to the right, y downward." },
+    "measured": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "note"],
+      "properties": {
+        "status": { "enum": ["verified", "documented-unverified", "requires-manual-review", "unknown", "not-applicable"] },
+        "note": { "$ref": "#/$defs/text" },
+        "claims": { "type": "array", "items": { "$ref": "#/$defs/text" }, "description": "Statements made by repository documentation about this property, recorded verbatim in spirit and NOT verified." }
+      }
+    },
+    "asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "path", "sha256", "media", "kind", "summary", "depicts", "demonstrates", "runtime_role", "runtime_role_rationale", "implementation_notes", "related_docs", "provenance", "relationships", "verification", "confidence"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "path": { "type": "string", "minLength": 1, "description": "Repository-relative path using forward slashes and the exact letter case on disk." },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$", "description": "DERIVED. SHA-256 of the file bytes." },
+        "media": { "$ref": "#/$defs/media" },
+        "kind": {
+          "enum": ["sprite-atlas", "mechanic-demonstration", "mechanic-diagram", "collision-diagram", "terrain-height-mask-reference", "map-composite", "object-hitbox-reference", "control-ui-icon", "diagnostic-overlay", "documentation-decoration", "other"],
+          "description": "Semantic kind; see catalog/README.md for definitions."
+        },
+        "tags": { "type": "array", "items": { "$ref": "#/$defs/text" }, "uniqueItems": true },
+        "summary": { "$ref": "#/$defs/text", "description": "Short literal description of what is visibly present." },
+        "depicts": { "$ref": "#/$defs/textList", "description": "Entities and visual concepts present in the file (observed)." },
+        "demonstrates": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["claim", "basis"],
+            "properties": {
+              "claim": { "$ref": "#/$defs/text" },
+              "basis": { "enum": ["documentation", "observed", "inferred"], "description": "documentation: stated by repository text; observed: directly visible; inferred: a reasoned reading that neither the file nor the text confirms." }
+            }
+          }
+        },
+        "sequence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["starting_state", "transitions", "ending_behavior", "mechanic_illustrated", "notable_changes"],
+          "description": "Required for animated assets. Frame numbers are 1-based and must be frames that were actually inspected.",
+          "properties": {
+            "starting_state": { "$ref": "#/$defs/text" },
+            "transitions": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["at_frame", "description"],
+                "properties": { "at_frame": { "type": "integer", "minimum": 1 }, "description": { "$ref": "#/$defs/text" } }
+              }
+            },
+            "ending_behavior": { "$ref": "#/$defs/text" },
+            "mechanic_illustrated": { "$ref": "#/$defs/text" },
+            "notable_changes": { "type": "array", "items": { "$ref": "#/$defs/text" } }
+          }
+        },
+        "atlas": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "frame_regions", "poses", "animation_sequences", "frame_durations", "loop_behavior", "mirroring", "pivot", "collision_relation", "review_notes"],
+          "description": "Required for sprite atlases. Nothing here may be guessed: unknown or unverified properties must say so.",
+          "properties": {
+            "status": { "enum": ["verified", "partially-verified", "requires-manual-review"] },
+            "frame_regions": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["status", "note"],
+              "properties": {
+                "status": { "enum": ["verified", "requires-manual-review", "unknown"] },
+                "method": { "const": "opaque-component-bounds", "description": "Regions are tight bounds of 8-connected groups of pixels with alpha >= alpha_threshold." },
+                "connectivity": { "const": 8 },
+                "alpha_threshold": { "type": "integer", "minimum": 1, "maximum": 255 },
+                "sort_band_px": { "type": "integer", "minimum": 1, "description": "Regions are ordered by (floor(vertical centre / sort_band_px), x)." },
+                "regions": { "type": "array", "items": { "$ref": "#/$defs/bounds" } },
+                "non_sprite_components": { "type": "array", "items": { "$ref": "#/$defs/bounds" }, "description": "Measured pixel groups judged not to be frames." },
+                "note": { "$ref": "#/$defs/text" }
+              }
+            },
+            "poses": { "$ref": "#/$defs/measured" },
+            "animation_sequences": { "$ref": "#/$defs/measured" },
+            "frame_durations": { "$ref": "#/$defs/measured" },
+            "loop_behavior": { "$ref": "#/$defs/measured" },
+            "mirroring": { "$ref": "#/$defs/measured" },
+            "pivot": { "$ref": "#/$defs/measured" },
+            "collision_relation": { "$ref": "#/$defs/measured" },
+            "review_notes": { "type": "array", "items": { "$ref": "#/$defs/text" } }
+          }
+        },
+        "runtime_role": { "enum": ["reference-only", "candidate-runtime-art", "source-data", "tooling", "unknown"] },
+        "runtime_role_rationale": { "$ref": "#/$defs/text" },
+        "implementation_notes": { "$ref": "#/$defs/textList", "description": "Portable guidance only; no implementation stack is assumed." },
+        "related_docs": {
+          "type": "array",
+          "description": "DERIVED from a scan of Markdown files. Empty when nothing references the asset.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path", "reference", "lines", "headings"],
+            "properties": {
+              "path": { "type": "string", "minLength": 1 },
+              "reference": { "enum": ["embedded-image", "link", "filename-mention", "external-citation"] },
+              "lines": { "type": "array", "minItems": 1, "items": { "type": "integer", "minimum": 1 } },
+              "headings": { "type": "array", "items": { "type": "string" }, "description": "Heading chains (H1 > ... > nearest) at the reference lines." },
+              "alt_texts": { "type": "array", "items": { "type": "string" } },
+              "urls": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        },
+        "provenance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["cited_source_url", "cited_source_evidence", "source_pages", "acquisition", "creator", "creator_evidence", "license", "license_evidence", "rights_status", "rights_notes"],
+          "properties": {
+            "cited_source_url": { "type": ["string", "null"], "pattern": "^https?://", "description": "A URL for this specific file that appears verbatim in repository documentation. null when none is cited." },
+            "cited_source_evidence": { "type": ["string", "null"] },
+            "source_pages": { "type": "array", "items": { "type": "string", "pattern": "^https?://" }, "description": "DERIVED. Upstream page URLs recorded in the Source line of the documents that reference the asset. These are pages, not the file." },
+            "acquisition": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["method", "evidence"],
+              "properties": { "method": { "enum": ["scraped-from-wiki", "manually-added", "unknown"] }, "evidence": { "$ref": "#/$defs/text" } }
+            },
+            "creator": { "type": ["string", "null"], "description": "Only when named by the file or repository documentation." },
+            "creator_evidence": { "type": ["string", "null"] },
+            "license": { "type": ["string", "null"], "description": "Only when explicitly known; never inferred." },
+            "license_evidence": { "type": ["string", "null"] },
+            "rights_status": { "enum": ["explicit-license", "restricted-or-unclear", "unknown"] },
+            "rights_notes": { "$ref": "#/$defs/text" }
+          }
+        },
+        "relationships": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["exact_duplicate_of", "exact_duplicates", "related"],
+          "properties": {
+            "exact_duplicate_of": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/id" }], "description": "DERIVED. Canonical id when this file is a byte-identical redundant copy." },
+            "exact_duplicates": { "type": "array", "items": { "$ref": "#/$defs/id" }, "description": "DERIVED. On the canonical entry, ids of its byte-identical copies." },
+            "related": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["type", "target", "basis", "note"],
+                "properties": {
+                  "type": { "enum": ["visual-variant-of", "transparent-counterpart-of", "chroma-key-counterpart-of", "derived-from", "companion-of", "same-mechanic-as"] },
+                  "target": { "$ref": "#/$defs/id" },
+                  "basis": { "enum": ["observed", "documentation", "filename-convention", "pixel-comparison"] },
+                  "note": { "$ref": "#/$defs/text" }
+                }
+              }
+            }
+          }
+        },
+        "verification": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["visual_inspection", "inspected_frames", "numeric_spatial_metadata"],
+          "properties": {
+            "visual_inspection": { "enum": ["full", "all-frames", "sampled-frames", "source-text-review", "none"] },
+            "inspected_frames": { "type": "array", "items": { "type": "integer", "minimum": 1 }, "description": "1-based frame numbers of animated assets that were actually viewed." },
+            "numeric_spatial_metadata": { "enum": ["not-applicable", "not-recorded", "labels-transcribed-unverified", "requires-manual-review", "verified"] }
+          }
+        },
+        "confidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["level", "reason", "needs_review", "review_flags"],
+          "properties": {
+            "level": { "enum": ["high", "medium", "low"] },
+            "reason": { "$ref": "#/$defs/text" },
+            "needs_review": { "type": "boolean" },
+            "review_flags": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": { "enum": ["provenance-unverified", "rights-unverified", "atlas-frame-boundaries", "atlas-pivots", "atlas-pose-names", "description-uncertain", "sequence-interpretation-partial", "numeric-values-unverified", "format-extension-mismatch", "documentation-claim-unverified", "duplicate-filename-variant", "doc-alt-text-mismatch"] }
+            }
+          }
+        }
+      },
+      "allOf": [
+        { "if": { "properties": { "kind": { "const": "sprite-atlas" } }, "required": ["kind"] }, "then": { "required": ["atlas"] } }
+      ]
+    },
+    "media": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["format", "mime", "extension_matches_format", "bytes", "width", "height", "color_model", "bit_depth", "alpha", "animated", "frame_count", "frame_timing"],
+      "description": "DERIVED from file headers. Format is decided by content signature, never by extension.",
+      "properties": {
+        "format": { "enum": ["png", "gif", "jpeg", "svg", "lua"] },
+        "mime": { "type": "string", "minLength": 1 },
+        "extension_matches_format": { "type": "boolean" },
+        "bytes": { "type": "integer", "minimum": 0 },
+        "width": { "type": ["number", "null"], "description": "Pixels for raster images, declared user units for vector images, null for text." },
+        "height": { "type": ["number", "null"] },
+        "view_box": { "type": "string" },
+        "line_count": { "type": "integer", "minimum": 0 },
+        "color_model": { "enum": ["grayscale", "rgb", "indexed", "grayscale-alpha", "rgba", "ycbcr", "cmyk", null] },
+        "bit_depth": { "type": ["integer", "null"] },
+        "alpha": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "has_transparent_pixels", "has_partial_alpha"],
+          "properties": {
+            "mode": { "enum": ["none", "alpha-channel", "palette-transparency", "color-key", "not-measured", "not-applicable"], "description": "How transparency is encoded. For animated images a declared transparent index does not prove the composited animation has see-through pixels." },
+            "has_transparent_pixels": { "type": ["boolean", "null"], "description": "True if any pixel has alpha < 255; null when not measured." },
+            "has_partial_alpha": { "type": ["boolean", "null"], "description": "True if any pixel has 0 < alpha < 255; null when not measured." }
+          }
+        },
+        "animated": { "type": "boolean" },
+        "frame_count": { "$ref": "#/$defs/intOrNull", "description": "1 for still images; null for non-raster files." },
+        "frame_timing": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["unit", "total_duration_ms", "uniform_delay_ms", "delays_ms", "loop", "loop_count"],
+              "properties": {
+                "unit": { "const": "ms" },
+                "total_duration_ms": { "type": "integer", "minimum": 0 },
+                "uniform_delay_ms": { "$ref": "#/$defs/intOrNull" },
+                "delays_ms": { "oneOf": [{ "type": "null" }, { "type": "array", "items": { "type": "integer", "minimum": 0 } }], "description": "Per-frame delays when they are not all equal; otherwise null." },
+                "loop": { "enum": ["infinite", "finite", "unspecified"] },
+                "loop_count": { "$ref": "#/$defs/intOrNull" }
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}
